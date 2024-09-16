@@ -3,5 +3,5 @@
 実行方法
 
 ```
-$ cargo run -p ch01
+$ cargo run -p ch02 --bin 2_1_6
 ```
