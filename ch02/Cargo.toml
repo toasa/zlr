@@ -24,3 +24,15 @@ path = "src/2_1_9/main.rs"
 [[bin]]
 name = "2_1_11"
 path = "src/2_1_11/main.rs"
+
+[[bin]]
+name = "2_2_13"
+path = "src/2_2_13/main.rs"
+
+[[bin]]
+name = "2_2_14"
+path = "src/2_2_14/main.rs"
+
+[[bin]]
+name = "2_2_15"
+path = "src/2_2_15/main.rs"
