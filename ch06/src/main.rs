@@ -36,7 +36,7 @@ fn parse_atom<I>(chars: &mut Peekable<I>) -> Node
 where
     I: Iterator<Item = char>,
 {
-    let mut n = match chars.next().unwrap() {
+    let n = match chars.next().unwrap() {
         '(' => {
             let n = parse_expr(chars);
             assert_eq!(chars.next(), Some(')'));
@@ -46,20 +46,15 @@ where
     };
 
     if let Some(&next) = chars.peek() {
-        match next {
-            '*' => {
-                chars.next();
-                n = Node::Star(Box::new(n));
-            }
-            '|' => {
-                chars.next();
-                let rhs = parse_expr(chars);
-                n = Node::Or((Box::new(n), Box::new(rhs)));
-            }
-            _ => {}
+        if next == '*' {
+            chars.next();
+            return Node::Star(Box::new(n));
+        } else if next == '|' {
+            chars.next();
+            let rhs = parse_expr(chars);
+            return Node::Or((Box::new(n), Box::new(rhs)));
         }
     }
-
     n
 }
 
