@@ -5,6 +5,7 @@ enum Node {
     Char(char),
     Seq(Vec<Node>),
     Star(Box<Node>),
+    Or((Box<Node>, Box<Node>)),
 }
 
 fn _parse(input_it: &mut Peekable<impl Iterator<Item = char>>) -> Option<Node> {
@@ -17,6 +18,10 @@ fn _parse(input_it: &mut Peekable<impl Iterator<Item = char>>) -> Option<Node> {
             if *c == '*' {
                 input_it.next();
                 return Some(Node::Star(Box::new(n)));
+            } else if *c == '|' {
+                input_it.next();
+                let rhs = _parse(input_it)?;
+                return Some(Node::Or((Box::new(n), Box::new(rhs))));
             }
         }
         None => return Some(n),
@@ -72,6 +77,24 @@ mod tests {
                 Node::Char('b'),
                 Node::Star(Box::new(Node::Char('c')))
             ])
+        );
+    }
+
+    #[test]
+    fn test_parse_or() {
+        assert_eq!(
+            parse("a|b"),
+            Node::Or((Box::new(Node::Char('a')), Box::new(Node::Char('b'))))
+        );
+        assert_eq!(
+            parse("a|b|c"),
+            Node::Or((
+                Box::new(Node::Char('a')),
+                Box::new(Node::Or((
+                    Box::new(Node::Char('b')),
+                    Box::new(Node::Char('c'))
+                )))
+            ))
         );
     }
 }
