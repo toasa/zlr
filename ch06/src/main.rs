@@ -36,11 +36,11 @@ fn parse_atom<I>(chars: &mut Peekable<I>) -> Node
 where
     I: Iterator<Item = char>,
 {
-    let mut node = match chars.next().unwrap() {
+    let mut n = match chars.next().unwrap() {
         '(' => {
-            let node = parse_expr(chars);
+            let n = parse_expr(chars);
             assert_eq!(chars.next(), Some(')'));
-            node
+            n
         }
         c => Node::Char(c),
     };
@@ -49,18 +49,18 @@ where
         match next {
             '*' => {
                 chars.next();
-                node = Node::Star(Box::new(node));
+                n = Node::Star(Box::new(n));
             }
             '|' => {
                 chars.next();
-                let right = parse_expr(chars);
-                node = Node::Or((Box::new(node), Box::new(right)));
+                let rhs = parse_expr(chars);
+                n = Node::Or((Box::new(n), Box::new(rhs)));
             }
             _ => {}
         }
     }
 
-    node
+    n
 }
 
 #[cfg(test)]
