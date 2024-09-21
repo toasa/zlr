@@ -1,4 +1,4 @@
-use std::iter::Peekable;
+use std::{iter::Peekable, vec};
 
 #[derive(Debug, PartialEq)]
 enum Node {
@@ -8,42 +8,59 @@ enum Node {
     Or((Box<Node>, Box<Node>)),
 }
 
-fn _parse(input_it: &mut Peekable<impl Iterator<Item = char>>) -> Option<Node> {
-    let c = input_it.next()?;
-
-    let n = Node::Char(c);
-
-    match input_it.peek() {
-        Some(c) => {
-            if *c == '*' {
-                input_it.next();
-                return Some(Node::Star(Box::new(n)));
-            } else if *c == '|' {
-                input_it.next();
-                let rhs = _parse(input_it)?;
-                return Some(Node::Or((Box::new(n), Box::new(rhs))));
-            }
-        }
-        None => return Some(n),
-    }
-
-    let mut seq = vec![n];
-    while let Some(next) = _parse(input_it) {
-        match next {
-            Node::Seq(mut cont) => seq.append(&mut cont),
-            _ => seq.push(next),
-        }
-    }
-
-    return Some(Node::Seq(seq));
+fn parse(input: &str) -> Node {
+    let mut chars = input.chars().peekable();
+    parse_expr(&mut chars)
 }
 
-fn parse(input: &str) -> Node {
-    if let Some(n) = _parse(&mut input.chars().peekable()) {
-        return n;
+fn parse_expr<I>(chars: &mut Peekable<I>) -> Node
+where
+    I: Iterator<Item = char>,
+{
+    let mut seq = vec![];
+    while let Some(&c) = chars.peek() {
+        match c {
+            ')' => break,
+            _ => seq.push(parse_atom(chars)),
+        }
     }
 
-    panic!();
+    if seq.len() == 1 {
+        seq.pop().unwrap()
+    } else {
+        Node::Seq(seq)
+    }
+}
+
+fn parse_atom<I>(chars: &mut Peekable<I>) -> Node
+where
+    I: Iterator<Item = char>,
+{
+    let mut node = match chars.next().unwrap() {
+        '(' => {
+            let node = parse_expr(chars);
+            assert_eq!(chars.next(), Some(')'));
+            node
+        }
+        c => Node::Char(c),
+    };
+
+    if let Some(&next) = chars.peek() {
+        match next {
+            '*' => {
+                chars.next();
+                node = Node::Star(Box::new(node));
+            }
+            '|' => {
+                chars.next();
+                let right = parse_expr(chars);
+                node = Node::Or((Box::new(node), Box::new(right)));
+            }
+            _ => {}
+        }
+    }
+
+    node
 }
 
 #[cfg(test)]
@@ -95,6 +112,42 @@ mod tests {
                     Box::new(Node::Char('c'))
                 )))
             ))
+        );
+    }
+
+    #[test]
+    fn test_parse_composite() {
+        assert_eq!(parse("(a)"), Node::Char('a'));
+        assert_eq!(
+            parse("(ab)"),
+            Node::Seq(vec![Node::Char('a'), Node::Char('b')])
+        );
+        assert_eq!(
+            parse("(abc)"),
+            Node::Seq(vec![Node::Char('a'), Node::Char('b'), Node::Char('c')])
+        );
+        assert_eq!(
+            parse("(ab)*"),
+            Node::Star(Box::new(Node::Seq(vec![Node::Char('a'), Node::Char('b')])))
+        );
+        assert_eq!(
+            parse("ab(c|de)"),
+            Node::Seq(vec![
+                Node::Char('a'),
+                Node::Char('b'),
+                Node::Or((
+                    Box::new(Node::Char('c')),
+                    Box::new(Node::Seq(vec![Node::Char('d'), Node::Char('e')])),
+                ))
+            ])
+        );
+        assert_eq!(
+            parse("a(bc)*d"),
+            Node::Seq(vec![
+                Node::Char('a'),
+                Node::Star(Box::new(Node::Seq(vec![Node::Char('b'), Node::Char('c')]))),
+                Node::Char('d'),
+            ])
         );
     }
 }
