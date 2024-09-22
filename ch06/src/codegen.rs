@@ -28,7 +28,7 @@ impl Generator {
         });
     }
 
-    fn gen_expr(&mut self, n: &Node) {
+    fn gen_expr(&mut self, n: &Node) -> u32 {
         match n {
             Node::Char(c) => {
                 self.insts.push(Inst {
@@ -36,13 +36,16 @@ impl Generator {
                     line: self.line,
                 });
                 self.line += 1;
+                return 1;
             }
             Node::Seq(seq) => {
+                let mut nline: u32 = 0;
                 for e in seq {
-                    self.gen_expr(e);
+                    nline += self.gen_expr(e);
                 }
+                return nline;
             }
-            _ => {}
+            _ => 0,
         }
     }
 }
