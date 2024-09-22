@@ -46,11 +46,10 @@ impl Generator {
                 self.line += 1; // for Split
 
                 let mut lhs = self.gen_expr(lhs);
-                let lhs_len = lhs.len();
 
                 let mut insts = vec![];
                 insts.push(Inst {
-                    op: Op::Split(l + 1, l + lhs_len + 2),
+                    op: Op::Split(l + 1, l + lhs.len() + 2),
                 });
 
                 insts.append(&mut lhs);
@@ -59,10 +58,9 @@ impl Generator {
                 self.line += 1; // for Jmp
 
                 let mut rhs = self.gen_expr(rhs);
-                let rhs_len = rhs.len();
 
                 insts.push(Inst {
-                    op: Op::Jmp(l + rhs_len + 1),
+                    op: Op::Jmp(l + rhs.len() + 1),
                 });
 
                 insts.append(&mut rhs);
@@ -74,11 +72,10 @@ impl Generator {
                 self.line += 1; // for Split
 
                 let mut lhs = self.gen_expr(n);
-                let lhs_len = lhs.len();
 
                 let mut insts = vec![];
                 insts.push(Inst {
-                    op: Op::Split(l + 1, l + lhs_len + 2),
+                    op: Op::Split(l + 1, l + lhs.len() + 2),
                 });
 
                 insts.append(&mut lhs);
