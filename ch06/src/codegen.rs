@@ -1,12 +1,7 @@
 use crate::parse::Node;
 
 #[derive(PartialEq, Debug)]
-struct Inst {
-    op: Op,
-}
-
-#[derive(PartialEq, Debug)]
-enum Op {
+enum Inst {
     Char(char),
     Jmp(usize),
     Split(usize, usize),
@@ -24,7 +19,7 @@ impl Generator {
 
     pub fn gen(&mut self, n: &Node) -> Vec<Inst> {
         let mut insts = self.gen_expr(n);
-        insts.push(Inst { op: Op::Match });
+        insts.push(Inst::Match);
         insts
     }
 
@@ -32,7 +27,7 @@ impl Generator {
         match n {
             Node::Char(c) => {
                 self.line += 1;
-                vec![Inst { op: Op::Char(*c) }]
+                vec![Inst::Char(*c)]
             }
             Node::Seq(seq) => {
                 let mut insts = vec![];
@@ -48,9 +43,7 @@ impl Generator {
                 let mut lhs = self.gen_expr(lhs);
 
                 let mut insts = vec![];
-                insts.push(Inst {
-                    op: Op::Split(l + 1, l + lhs.len() + 2),
-                });
+                insts.push(Inst::Split(l + 1, l + lhs.len() + 2));
 
                 insts.append(&mut lhs);
 
@@ -59,9 +52,7 @@ impl Generator {
 
                 let mut rhs = self.gen_expr(rhs);
 
-                insts.push(Inst {
-                    op: Op::Jmp(l + rhs.len() + 1),
-                });
+                insts.push(Inst::Jmp(l + rhs.len() + 1));
 
                 insts.append(&mut rhs);
 
@@ -74,13 +65,11 @@ impl Generator {
                 let mut lhs = self.gen_expr(n);
 
                 let mut insts = vec![];
-                insts.push(Inst {
-                    op: Op::Split(l + 1, l + lhs.len() + 2),
-                });
+                insts.push(Inst::Split(l + 1, l + lhs.len() + 2));
 
                 insts.append(&mut lhs);
 
-                insts.push(Inst { op: Op::Jmp(l) });
+                insts.push(Inst::Jmp(l));
                 self.line += 1;
 
                 insts
@@ -93,17 +82,14 @@ impl Generator {
 mod tests {
     use super::*;
 
-    fn test(_in: Node, _out: Vec<Inst>) {
+    fn test(_in: Node, expect: Vec<Inst>) {
         let mut g = Generator::new();
-        assert_eq!(g.gen(&_in), _out);
+        assert_eq!(g.gen(&_in), expect);
     }
 
     #[test]
     fn test_codegen_char() {
-        test(
-            Node::Char('a'),
-            vec![Inst { op: Op::Char('a') }, Inst { op: Op::Match }],
-        )
+        test(Node::Char('a'), vec![Inst::Char('a'), Inst::Match])
     }
 
     #[test]
@@ -111,10 +97,10 @@ mod tests {
         test(
             Node::Seq(vec![Node::Char('a'), Node::Char('b'), Node::Char('c')]),
             vec![
-                Inst { op: Op::Char('a') },
-                Inst { op: Op::Char('b') },
-                Inst { op: Op::Char('c') },
-                Inst { op: Op::Match },
+                Inst::Char('a'),
+                Inst::Char('b'),
+                Inst::Char('c'),
+                Inst::Match,
             ],
         )
     }
@@ -124,13 +110,11 @@ mod tests {
         test(
             Node::Or((Box::new(Node::Char('a')), Box::new(Node::Char('b')))),
             vec![
-                Inst {
-                    op: Op::Split(1, 3),
-                },
-                Inst { op: Op::Char('a') },
-                Inst { op: Op::Jmp(4) },
-                Inst { op: Op::Char('b') },
-                Inst { op: Op::Match },
+                Inst::Split(1, 3),
+                Inst::Char('a'),
+                Inst::Jmp(4),
+                Inst::Char('b'),
+                Inst::Match,
             ],
         );
 
@@ -143,18 +127,14 @@ mod tests {
                 ))),
             )),
             vec![
-                Inst {
-                    op: Op::Split(1, 3),
-                },
-                Inst { op: Op::Char('a') },
-                Inst { op: Op::Jmp(7) },
-                Inst {
-                    op: Op::Split(4, 6),
-                },
-                Inst { op: Op::Char('b') },
-                Inst { op: Op::Jmp(7) },
-                Inst { op: Op::Char('c') },
-                Inst { op: Op::Match },
+                Inst::Split(1, 3),
+                Inst::Char('a'),
+                Inst::Jmp(7),
+                Inst::Split(4, 6),
+                Inst::Char('b'),
+                Inst::Jmp(7),
+                Inst::Char('c'),
+                Inst::Match,
             ],
         );
     }
@@ -164,12 +144,10 @@ mod tests {
         test(
             Node::Star(Box::new(Node::Char('a'))),
             vec![
-                Inst {
-                    op: Op::Split(1, 3),
-                },
-                Inst { op: Op::Char('a') },
-                Inst { op: Op::Jmp(0) },
-                Inst { op: Op::Match },
+                Inst::Split(1, 3),
+                Inst::Char('a'),
+                Inst::Jmp(0),
+                Inst::Match,
             ],
         );
     }
