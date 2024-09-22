@@ -79,7 +79,29 @@ impl Generator {
 
                 insts
             }
-            _ => vec![],
+            Node::Star(n) => {
+                let l = self.line;
+                self.line += 1; // for Split
+
+                let mut lhs = self.gen_expr(n);
+                let lhs_len = lhs.len();
+
+                let mut insts = vec![];
+                insts.push(Inst {
+                    op: Op::Split(l + 1, l + lhs_len + 2),
+                    line: l,
+                });
+
+                insts.append(&mut lhs);
+
+                insts.push(Inst {
+                    op: Op::Jmp(l),
+                    line: self.line,
+                });
+                self.line += 1;
+
+                insts
+            }
         }
     }
 }
@@ -138,6 +160,32 @@ mod tests {
     #[test]
     fn test_codegen_or() {
         test(
+            Node::Or((Box::new(Node::Char('a')), Box::new(Node::Char('b')))),
+            vec![
+                Inst {
+                    op: Op::Split(1, 3),
+                    line: 0,
+                },
+                Inst {
+                    op: Op::Char('a'),
+                    line: 1,
+                },
+                Inst {
+                    op: Op::Jmp(4),
+                    line: 2,
+                },
+                Inst {
+                    op: Op::Char('b'),
+                    line: 3,
+                },
+                Inst {
+                    op: Op::Match,
+                    line: 4,
+                },
+            ],
+        );
+
+        test(
             Node::Or((
                 Box::new(Node::Char('a')),
                 Box::new(Node::Or((
@@ -180,9 +228,12 @@ mod tests {
                 },
             ],
         );
+    }
 
+    #[test]
+    fn test_codegen_star() {
         test(
-            Node::Or((Box::new(Node::Char('a')), Box::new(Node::Char('b')))),
+            Node::Star(Box::new(Node::Char('a'))),
             vec![
                 Inst {
                     op: Op::Split(1, 3),
@@ -193,18 +244,14 @@ mod tests {
                     line: 1,
                 },
                 Inst {
-                    op: Op::Jmp(4),
+                    op: Op::Jmp(0),
                     line: 2,
                 },
                 Inst {
-                    op: Op::Char('b'),
+                    op: Op::Match,
                     line: 3,
                 },
-                Inst {
-                    op: Op::Match,
-                    line: 4,
-                },
             ],
-        )
+        );
     }
 }
