@@ -2,5 +2,6 @@ mod codegen;
 mod parse;
 
 fn main() {
-    _ = parse::parse("abc");
+    let node = parse::parse("abc");
+    _ = codegen::gen(&node);
 }

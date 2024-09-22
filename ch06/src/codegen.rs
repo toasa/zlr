@@ -1,11 +1,18 @@
 use crate::parse::Node;
 
 #[derive(PartialEq, Debug)]
-enum Inst {
+pub enum Inst {
     Char(char),
     Jmp(usize),
     Split(usize, usize),
     Match,
+}
+
+pub fn gen(n: &Node) -> Vec<Inst> {
+    let mut g = Generator { line: 0 };
+    let mut insts = g.gen_expr(n);
+    insts.push(Inst::Match);
+    insts
 }
 
 struct Generator {
@@ -13,16 +20,6 @@ struct Generator {
 }
 
 impl Generator {
-    pub fn new() -> Self {
-        Generator { line: 0 }
-    }
-
-    pub fn gen(&mut self, n: &Node) -> Vec<Inst> {
-        let mut insts = self.gen_expr(n);
-        insts.push(Inst::Match);
-        insts
-    }
-
     fn gen_expr(&mut self, n: &Node) -> Vec<Inst> {
         match n {
             Node::Char(c) => {
@@ -83,8 +80,7 @@ mod tests {
     use super::*;
 
     fn test(_in: Node, expect: Vec<Inst>) {
-        let mut g = Generator::new();
-        assert_eq!(g.gen(&_in), expect);
+        assert_eq!(gen(&_in), expect);
     }
 
     #[test]
