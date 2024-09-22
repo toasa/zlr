@@ -3,49 +3,83 @@ use crate::parse::Node;
 #[derive(PartialEq, Debug)]
 struct Inst {
     op: Op,
-    line: u32,
+    line: usize,
 }
 
 #[derive(PartialEq, Debug)]
 enum Op {
     Char(char),
-    Jmp(u32),
-    Split(u32, u32),
+    Jmp(usize),
+    Split(usize, usize),
     Match,
 }
 
 struct Generator {
-    line: u32,
-    insts: Vec<Inst>,
+    line: usize,
 }
 
 impl Generator {
-    pub fn gen(&mut self, n: &Node) {
-        self.gen_expr(n);
-        self.insts.push(Inst {
+    pub fn new() -> Self {
+        Generator { line: 0 }
+    }
+
+    pub fn gen(&mut self, n: &Node) -> Vec<Inst> {
+        let mut insts = self.gen_expr(n);
+        insts.push(Inst {
             op: Op::Match,
             line: self.line,
         });
+        insts
     }
 
-    fn gen_expr(&mut self, n: &Node) -> u32 {
+    fn gen_expr(&mut self, n: &Node) -> Vec<Inst> {
         match n {
             Node::Char(c) => {
-                self.insts.push(Inst {
-                    op: Op::Char(*c),
-                    line: self.line,
-                });
+                let l = self.line;
                 self.line += 1;
-                return 1;
+                vec![Inst {
+                    op: Op::Char(*c),
+                    line: l,
+                }]
             }
             Node::Seq(seq) => {
-                let mut nline: u32 = 0;
+                let mut insts = vec![];
                 for e in seq {
-                    nline += self.gen_expr(e);
+                    insts.append(&mut self.gen_expr(e));
                 }
-                return nline;
+                insts
             }
-            _ => 0,
+            Node::Or((lhs, rhs)) => {
+                let l = self.line;
+                self.line += 1; // for Split
+
+                let mut lhs = self.gen_expr(lhs);
+                let lhs_len = lhs.len();
+
+                let mut insts = vec![];
+                insts.push(Inst {
+                    op: Op::Split(l + 1, l + lhs_len + 2),
+                    line: l,
+                });
+
+                insts.append(&mut lhs);
+
+                let l = self.line;
+                self.line += 1; // for Jmp
+
+                let mut rhs = self.gen_expr(rhs);
+                let rhs_len = rhs.len();
+
+                insts.push(Inst {
+                    op: Op::Jmp(l + rhs_len),
+                    line: l,
+                });
+
+                insts.append(&mut rhs);
+
+                insts
+            }
+            _ => vec![],
         }
     }
 }
@@ -55,12 +89,8 @@ mod tests {
     use super::*;
 
     fn test(_in: Node, _out: Vec<Inst>) {
-        let mut g = Generator {
-            line: 0,
-            insts: vec![],
-        };
-        g.gen(&_in);
-        assert_eq!(g.insts, _out);
+        let mut g = Generator::new();
+        assert_eq!(g.gen(&_in), _out);
     }
 
     #[test]
@@ -100,6 +130,35 @@ mod tests {
                 Inst {
                     op: Op::Match,
                     line: 3,
+                },
+            ],
+        )
+    }
+
+    #[test]
+    fn test_codegen_or() {
+        test(
+            Node::Or((Box::new(Node::Char('a')), Box::new(Node::Char('b')))),
+            vec![
+                Inst {
+                    op: Op::Split(1, 3),
+                    line: 0,
+                },
+                Inst {
+                    op: Op::Char('a'),
+                    line: 1,
+                },
+                Inst {
+                    op: Op::Jmp(3),
+                    line: 2,
+                },
+                Inst {
+                    op: Op::Char('b'),
+                    line: 3,
+                },
+                Inst {
+                    op: Op::Match,
+                    line: 4,
                 },
             ],
         )
