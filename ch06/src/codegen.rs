@@ -71,7 +71,7 @@ impl Generator {
                 let rhs_len = rhs.len();
 
                 insts.push(Inst {
-                    op: Op::Jmp(l + rhs_len),
+                    op: Op::Jmp(l + rhs_len + 1),
                     line: l,
                 });
 
@@ -138,6 +138,50 @@ mod tests {
     #[test]
     fn test_codegen_or() {
         test(
+            Node::Or((
+                Box::new(Node::Char('a')),
+                Box::new(Node::Or((
+                    Box::new(Node::Char('b')),
+                    Box::new(Node::Char('c')),
+                ))),
+            )),
+            vec![
+                Inst {
+                    op: Op::Split(1, 3),
+                    line: 0,
+                },
+                Inst {
+                    op: Op::Char('a'),
+                    line: 1,
+                },
+                Inst {
+                    op: Op::Jmp(7),
+                    line: 2,
+                },
+                Inst {
+                    op: Op::Split(4, 6),
+                    line: 3,
+                },
+                Inst {
+                    op: Op::Char('b'),
+                    line: 4,
+                },
+                Inst {
+                    op: Op::Jmp(7),
+                    line: 5,
+                },
+                Inst {
+                    op: Op::Char('c'),
+                    line: 6,
+                },
+                Inst {
+                    op: Op::Match,
+                    line: 7,
+                },
+            ],
+        );
+
+        test(
             Node::Or((Box::new(Node::Char('a')), Box::new(Node::Char('b')))),
             vec![
                 Inst {
@@ -149,7 +193,7 @@ mod tests {
                     line: 1,
                 },
                 Inst {
-                    op: Op::Jmp(3),
+                    op: Op::Jmp(4),
                     line: 2,
                 },
                 Inst {
