@@ -3,7 +3,6 @@ use crate::parse::Node;
 #[derive(PartialEq, Debug)]
 struct Inst {
     op: Op,
-    line: usize,
 }
 
 #[derive(PartialEq, Debug)]
@@ -25,22 +24,15 @@ impl Generator {
 
     pub fn gen(&mut self, n: &Node) -> Vec<Inst> {
         let mut insts = self.gen_expr(n);
-        insts.push(Inst {
-            op: Op::Match,
-            line: self.line,
-        });
+        insts.push(Inst { op: Op::Match });
         insts
     }
 
     fn gen_expr(&mut self, n: &Node) -> Vec<Inst> {
         match n {
             Node::Char(c) => {
-                let l = self.line;
                 self.line += 1;
-                vec![Inst {
-                    op: Op::Char(*c),
-                    line: l,
-                }]
+                vec![Inst { op: Op::Char(*c) }]
             }
             Node::Seq(seq) => {
                 let mut insts = vec![];
@@ -59,7 +51,6 @@ impl Generator {
                 let mut insts = vec![];
                 insts.push(Inst {
                     op: Op::Split(l + 1, l + lhs_len + 2),
-                    line: l,
                 });
 
                 insts.append(&mut lhs);
@@ -72,7 +63,6 @@ impl Generator {
 
                 insts.push(Inst {
                     op: Op::Jmp(l + rhs_len + 1),
-                    line: l,
                 });
 
                 insts.append(&mut rhs);
@@ -89,15 +79,11 @@ impl Generator {
                 let mut insts = vec![];
                 insts.push(Inst {
                     op: Op::Split(l + 1, l + lhs_len + 2),
-                    line: l,
                 });
 
                 insts.append(&mut lhs);
 
-                insts.push(Inst {
-                    op: Op::Jmp(l),
-                    line: self.line,
-                });
+                insts.push(Inst { op: Op::Jmp(l) });
                 self.line += 1;
 
                 insts
@@ -119,16 +105,7 @@ mod tests {
     fn test_codegen_char() {
         test(
             Node::Char('a'),
-            vec![
-                Inst {
-                    op: Op::Char('a'),
-                    line: 0,
-                },
-                Inst {
-                    op: Op::Match,
-                    line: 1,
-                },
-            ],
+            vec![Inst { op: Op::Char('a') }, Inst { op: Op::Match }],
         )
     }
 
@@ -137,22 +114,10 @@ mod tests {
         test(
             Node::Seq(vec![Node::Char('a'), Node::Char('b'), Node::Char('c')]),
             vec![
-                Inst {
-                    op: Op::Char('a'),
-                    line: 0,
-                },
-                Inst {
-                    op: Op::Char('b'),
-                    line: 1,
-                },
-                Inst {
-                    op: Op::Char('c'),
-                    line: 2,
-                },
-                Inst {
-                    op: Op::Match,
-                    line: 3,
-                },
+                Inst { op: Op::Char('a') },
+                Inst { op: Op::Char('b') },
+                Inst { op: Op::Char('c') },
+                Inst { op: Op::Match },
             ],
         )
     }
@@ -164,24 +129,11 @@ mod tests {
             vec![
                 Inst {
                     op: Op::Split(1, 3),
-                    line: 0,
                 },
-                Inst {
-                    op: Op::Char('a'),
-                    line: 1,
-                },
-                Inst {
-                    op: Op::Jmp(4),
-                    line: 2,
-                },
-                Inst {
-                    op: Op::Char('b'),
-                    line: 3,
-                },
-                Inst {
-                    op: Op::Match,
-                    line: 4,
-                },
+                Inst { op: Op::Char('a') },
+                Inst { op: Op::Jmp(4) },
+                Inst { op: Op::Char('b') },
+                Inst { op: Op::Match },
             ],
         );
 
@@ -196,36 +148,16 @@ mod tests {
             vec![
                 Inst {
                     op: Op::Split(1, 3),
-                    line: 0,
                 },
-                Inst {
-                    op: Op::Char('a'),
-                    line: 1,
-                },
-                Inst {
-                    op: Op::Jmp(7),
-                    line: 2,
-                },
+                Inst { op: Op::Char('a') },
+                Inst { op: Op::Jmp(7) },
                 Inst {
                     op: Op::Split(4, 6),
-                    line: 3,
                 },
-                Inst {
-                    op: Op::Char('b'),
-                    line: 4,
-                },
-                Inst {
-                    op: Op::Jmp(7),
-                    line: 5,
-                },
-                Inst {
-                    op: Op::Char('c'),
-                    line: 6,
-                },
-                Inst {
-                    op: Op::Match,
-                    line: 7,
-                },
+                Inst { op: Op::Char('b') },
+                Inst { op: Op::Jmp(7) },
+                Inst { op: Op::Char('c') },
+                Inst { op: Op::Match },
             ],
         );
     }
@@ -237,20 +169,10 @@ mod tests {
             vec![
                 Inst {
                     op: Op::Split(1, 3),
-                    line: 0,
                 },
-                Inst {
-                    op: Op::Char('a'),
-                    line: 1,
-                },
-                Inst {
-                    op: Op::Jmp(0),
-                    line: 2,
-                },
-                Inst {
-                    op: Op::Match,
-                    line: 3,
-                },
+                Inst { op: Op::Char('a') },
+                Inst { op: Op::Jmp(0) },
+                Inst { op: Op::Match },
             ],
         );
     }
