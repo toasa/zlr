@@ -40,4 +40,17 @@ mod tests {
     fn test_eval_char() {
         assert!(eval(vec![Inst::Char('a'), Inst::Match], "a"));
     }
+
+    #[test]
+    fn test_eval_seq() {
+        assert!(eval(
+            vec![
+                Inst::Char('a'),
+                Inst::Char('b'),
+                Inst::Char('c'),
+                Inst::Match,
+            ],
+            "abc"
+        ));
+    }
 }
