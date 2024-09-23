@@ -8,9 +8,9 @@ pub enum Inst {
     Match,
 }
 
-pub fn gen(n: &Node) -> Vec<Inst> {
+pub fn gen(n: Node) -> Vec<Inst> {
     let mut g = Generator { line: 0 };
-    let mut insts = g.gen_expr(n);
+    let mut insts = g.gen_expr(&n);
     insts.push(Inst::Match);
     insts
 }
@@ -91,7 +91,7 @@ mod tests {
     use super::*;
 
     fn test(_in: Node, expect: Vec<Inst>) {
-        assert_eq!(gen(&_in), expect);
+        assert_eq!(gen(_in), expect);
     }
 
     #[test]

@@ -58,7 +58,7 @@ mod tests {
 
     fn test(regex: &str, test_str: &str) {
         let n = parse(regex);
-        let insts = gen(&n);
+        let insts = gen(n);
         assert!(eval(insts, test_str));
     }
 
