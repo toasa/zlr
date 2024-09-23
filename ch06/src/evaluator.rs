@@ -60,31 +60,60 @@ mod tests {
     use crate::codegen::gen;
     use crate::parse::parse;
 
-    fn test(regex: &str, test_str: &str) {
+    fn test(regex: &str, test_str: &str, match_: bool) {
         let n = parse(regex);
         let insts = gen(n);
-        assert!(eval(insts, test_str));
+        assert_eq!(eval(insts, test_str), match_);
+    }
+
+    fn match_(regex: &str, test_str: &str) {
+        test(regex, test_str, true);
+    }
+
+    fn not_match(regex: &str, test_str: &str) {
+        test(regex, test_str, false);
     }
 
     #[test]
     fn test_eval_char() {
-        test("a", "a");
+        match_("a", "a");
+        not_match("a", "b");
     }
 
     #[test]
     fn test_eval_seq() {
-        test("abc", "abc");
+        match_("abc", "abc");
+        match_("abc", "abcd");
+
+        not_match("abc", "a");
+        not_match("abc", "abd");
+        not_match("abc", "abdc");
     }
 
     #[test]
     fn test_eval_or() {
-        test("a|b", "a");
-        test("a|b", "b");
+        match_("a|b", "a");
+        match_("a|b", "b");
+
+        not_match("a|b", "c");
     }
 
     #[test]
     fn test_eval_star() {
-        test("a*", "a");
-        test("a*", "aaaa");
+        match_("a*", "a");
+        match_("a*", "aaaa");
+    }
+
+    #[test]
+    fn test_eval_composite() {
+        match_("a(bc|de)", "abc");
+        match_("a(bc|de)", "ade");
+
+        match_("abc|def", "abc");
+        match_("abc|def", "def");
+
+        match_("a(bc)*d", "ad");
+        match_("a(bc)*d", "abcd");
+        match_("a(bc)*d", "abcbcbcd");
     }
 }
