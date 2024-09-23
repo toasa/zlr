@@ -8,20 +8,16 @@ pub enum Node {
     Or((Box<Node>, Box<Node>)),
 }
 
-// Operator's precedence is followings(from high to low):
-//   1. ()
-//   2. *, +, ?
-//   3.  (Concatenation)
-//   4. |
+// Generative grammar is followings:
 //
-// Reference is here:
+//   or     = concat ("|" or)?
+//   concat = star (star)*
+//   star   = group "*"?
+//   group  = '(' or ')'
+//          | 'a'..'z'
+//
+// Operator's precedence is referenced from POSIX.1-2024 "9.4.8 ERE Precedence":
 //   https://pubs.opengroup.org/onlinepubs/9799919799/nframe.html
-//
-// or     = concat ("|" or)?
-// concat = star (star)*
-// star   = group "*"?
-// group  = '(' or ')'
-//        | 'a'..'z'
 pub fn parse(input: &str) -> Node {
     let mut chars = input.chars().peekable();
     parse_or(&mut chars)
