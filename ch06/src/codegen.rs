@@ -71,6 +71,17 @@ impl Generator {
 
                 insts
             }
+            Node::Plus(n) => {
+                let mut insts = vec![];
+
+                let l = self.line;
+
+                insts.append(&mut self.gen_expr(n));
+
+                insts.push(Inst::Split(l, self.line + 1));
+
+                insts
+            }
         }
     }
 }
@@ -145,6 +156,14 @@ mod tests {
                 Inst::Jmp(0),
                 Inst::Match,
             ],
+        );
+    }
+
+    #[test]
+    fn test_codegen_plus() {
+        test(
+            Node::Plus(Box::new(Node::Char('a'))),
+            vec![Inst::Char('a'), Inst::Split(0, 2), Inst::Match],
         );
     }
 }

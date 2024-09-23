@@ -5,6 +5,7 @@ pub enum Node {
     Char(char),
     Seq(Vec<Node>),
     Star(Box<Node>),
+    Plus(Box<Node>),
     Or((Box<Node>, Box<Node>)),
 }
 
@@ -12,7 +13,7 @@ pub enum Node {
 //
 //   or     = concat ("|" or)?
 //   concat = star (star)*
-//   star   = group "*"?
+//   star   = group ("*" | "+")?
 //   group  = '(' or ')'
 //          | 'a'..'z'
 //
@@ -62,10 +63,14 @@ where
     I: Iterator<Item = char>,
 {
     let mut n = parse_group(chars);
+
     if let Some(&c) = chars.peek() {
         if c == '*' {
             chars.next();
             n = Node::Star(Box::new(n));
+        } else if c == '+' {
+            chars.next();
+            n = Node::Plus(Box::new(n));
         }
     }
 
