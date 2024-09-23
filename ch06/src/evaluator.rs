@@ -53,36 +53,27 @@ impl Machine {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::codegen::gen;
+    use crate::parse::parse;
+
+    fn test(regex: &str, test_str: &str) {
+        let n = parse(regex);
+        let insts = gen(&n);
+        assert!(eval(insts, test_str));
+    }
 
     #[test]
     fn test_eval_char() {
-        assert!(eval(vec![Inst::Char('a'), Inst::Match], "a"));
+        test("a", "a");
     }
 
     #[test]
     fn test_eval_seq() {
-        assert!(eval(
-            vec![
-                Inst::Char('a'),
-                Inst::Char('b'),
-                Inst::Char('c'),
-                Inst::Match,
-            ],
-            "abc"
-        ));
+        test("abc", "abc");
     }
 
     #[test]
     fn test_eval_or() {
-        assert!(eval(
-            vec![
-                Inst::Split(1, 3),
-                Inst::Char('a'),
-                Inst::Jmp(4),
-                Inst::Char('b'),
-                Inst::Match,
-            ],
-            "a"
-        ));
+        test("a|c", "a");
     }
 }
