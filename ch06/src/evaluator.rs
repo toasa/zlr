@@ -4,7 +4,7 @@ pub fn eval(insts: Vec<Inst>, target: &str) -> bool {
     let mut rm = Machine {
         pc: 0,
         sp: 0,
-        insts: insts,
+        insts,
         target_str: target.chars().collect(),
     };
     rm.run()
@@ -24,6 +24,10 @@ impl Machine {
             match self.insts[self.pc] {
                 Inst::Match => return true,
                 Inst::Char(c) => {
+                    if self.sp >= self.target_str.len() {
+                        return false;
+                    }
+
                     if c == self.target_str[self.sp] {
                         self.pc += 1;
                         self.sp += 1
@@ -74,6 +78,13 @@ mod tests {
 
     #[test]
     fn test_eval_or() {
-        test("a|c", "a");
+        test("a|b", "a");
+        test("a|b", "b");
+    }
+
+    #[test]
+    fn test_eval_star() {
+        test("a*", "a");
+        test("a*", "aaaa");
     }
 }
